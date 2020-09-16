@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  BackHandler
+  BackHandler,
+  Dimensions
 } from 'react-native';
 
 import {Spinner} from 'native-base'
@@ -69,16 +70,16 @@ class GifSearch extends PureComponent {
       this.horizontal = true;
       if (props.horizontal != null) {
           this.horizontal = props.horizontal;
-      }
-      
-      this.numColumns = null;
-      if (props.numColumns != null && !props.horizontal) {
+      }      
+      this.numColumns = 1;
+      if (props.numColumns != null) {
           this.numColumns = props.numColumns;
+          this.horizontal = false;
+          this.state.gifSize = Dimensions.get('window').width / this.numColumns - 20;
       }
-
       this.gifListProps = null;
       if (props.gifListProps != null) {
-        this.gifListProps = props.gifListProps
+          this.gifListProps = props.gifListProps;
       }
 
   }
@@ -165,6 +166,11 @@ class GifSearch extends PureComponent {
       if (this.props.onBackPressed != null){
           BackHandler.addEventListener('hardwareBackPress', this.handleBackButtonClick);
       }
+      if (this.numColumns > 1) {   
+          Dimensions.addEventListener('change', () => {
+              this.setState({gifSize: Dimensions.get('window').width / this.numColumns - 20})
+          })     
+      }
   }
   
   componentWillUnmount() {
@@ -216,10 +222,14 @@ class GifSearch extends PureComponent {
                   aspectRatio = parseInt(item.images.preview_gif.width)/parseInt(item.images.preview_gif.height)
               }
               return (
-                <TouchableOpacity activeOpacity={0.7} onPress={() => {this.props.onGifSelected(item.images.fixed_width_downsampled.url)}}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => {this.props.onGifSelected(item.images.fixed_width.url)}}
+                  onLongPress={() => {if (this.props.onGifLongPress) {this.props.onGifLongPress(item.images.fixed_width.url)}}}>
+                    
                   <Image
-                    resizeMode='contain'
-                    style={[this.styles.image, {aspectRatio: aspectRatio ? aspectRatio : 4/3}, this.horizontal ? {marginRight: 20} : {marginBottom: 20}, this.props.gifStyle]}
+                    resizeMode={'cover'}
+                    style={[this.styles.image, this.numColumns > 1 ? {width:this.state.gifSize, minHeight: this.state.gifSize, maxHeight:this.state.gifSize} : {aspectRatio: aspectRatio ? aspectRatio : 4/3, height: 150}, this.props.gifStyle]}
                     source={{uri: item.images.preview_gif.url}}
                   />
                 </TouchableOpacity>
@@ -249,23 +259,23 @@ class GifSearch extends PureComponent {
       flex: 1,
       alignItems: 'center',
       backgroundColor: 'black',
-      padding: 10
+      padding: 10,
     },
     textInput: {
       height: 50,
       fontSize: 20,
       paddingLeft: 10,
-      marginBottom: 10,
       color: 'white'
     },
     image: {
-      height:150,
       borderWidth: 3,
+      marginRight: 10,
+      marginBottom: 10
     },
     gifList: {
       height: 160,
-      margin: 5,
-      paddingBottom: 20,
+      margin: 5, 
+      marginBottom: 10,
     },
   });
 
